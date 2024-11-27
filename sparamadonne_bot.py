@@ -74,7 +74,7 @@ def main():
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
 
-    asyncio.create_task(ping_bot())
+    application.loop.create_task(ping_bot())
 
     application.run_polling()
 
