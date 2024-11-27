@@ -45,7 +45,6 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
 
     for url in image_urls:
         try:
-            print(f"Sending image: {url}")  # Debug
             await context.bot.send_photo(chat_id=chat_id, photo=url)
             await asyncio.sleep(3)  # Optional pause to avoid overloading
         except Exception as e:
