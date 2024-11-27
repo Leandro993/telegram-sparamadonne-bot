@@ -3,6 +3,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import asyncio
 import requests
 import time
+from flask import Flask
+import threading
+import os
 
 TOKEN = '7114806273:AAHgtfAfV391U0LgrWFy554-RkVcUb57l18'
 GOOGLE_API_KEY = 'AIzaSyDn5KBLfwN3U9Fp9i084plI_Hzb5G8_XCo'
@@ -72,6 +75,19 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Benvenuto! Invia una parola chiave per cercare immagini su Google.')
 
+# Funzione per creare il server Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running"
+
+# Funzione per eseguire il bot e Flask insieme
+def run_flask():
+    # Flask usa la variabile d'ambiente PORT per determinare la porta
+    port = int(os.environ.get('PORT', 5000))  # Porta predefinita 5000
+    app.run(host='0.0.0.0', port=port)
+
 # Funzione principale per eseguire il bot
 def main():
     application = Application.builder().token(TOKEN).build()
@@ -80,7 +96,11 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
 
     # Avvia il ping periodico dentro il ciclo di eventi esistente
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ping_bot))  # Usa questo per creare un handler separato
+    asyncio.create_task(ping_bot())  # Questo rimane asincrono
+
+    # Avvia il server Flask in un thread separato
+    threading.Thread(target=run_flask).start()
+
     application.run_polling()
 
 # Avvio del bot
