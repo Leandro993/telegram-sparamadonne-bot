@@ -2,10 +2,25 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import asyncio
 import requests
+import time
+import requests
 
 TOKEN = '7114806273:AAHgtfAfV391U0LgrWFy554-RkVcUb57l18'
 GOOGLE_API_KEY = 'AIzaSyDn5KBLfwN3U9Fp9i084plI_Hzb5G8_XCo'
 GOOGLE_CX = '4766ab6c805714436'
+
+async def ping_bot():
+    while True:
+        try:
+            response = requests.get('https://your-bot-url.onrender.com')  # Modifica con l'URL del tuo bot
+            if response.status_code == 200:
+                print("Ping success!")
+            else:
+                print(f"Ping failed with status: {response.status_code}")
+        except Exception as e:
+            print(f"Error while pinging: {e}")
+
+        await asyncio.sleep(300)
 
 async def fetch_image_urls(query: str):
     image_urls = []
@@ -58,6 +73,8 @@ def main():
 
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
+
+    asyncio.create_task(ping_bot())
 
     application.run_polling()
 
