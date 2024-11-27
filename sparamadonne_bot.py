@@ -3,15 +3,16 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import asyncio
 import requests
 import time
-import requests
 
 TOKEN = '7114806273:AAHgtfAfV391U0LgrWFy554-RkVcUb57l18'
 GOOGLE_API_KEY = 'AIzaSyDn5KBLfwN3U9Fp9i084plI_Hzb5G8_XCo'
 GOOGLE_CX = '4766ab6c805714436'
 
+# Funzione per pingare periodicamente il bot ogni 5 minuti
 async def ping_bot():
     while True:
         try:
+            # Esegui una richiesta HTTP per mantenere attivo il bot
             response = requests.get('https://your-bot-url.onrender.com')  # Modifica con l'URL del tuo bot
             if response.status_code == 200:
                 print("Ping success!")
@@ -20,8 +21,9 @@ async def ping_bot():
         except Exception as e:
             print(f"Error while pinging: {e}")
 
-        await asyncio.sleep(300)
+        await asyncio.sleep(300)  # 300 secondi = 5 minuti
 
+# Funzione per recuperare le immagini da Google
 async def fetch_image_urls(query: str):
     image_urls = []
     max_results = 50
@@ -45,6 +47,7 @@ async def fetch_image_urls(query: str):
 
     return image_urls
 
+# Funzione per inviare le immagini dal bot
 async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.message.text
     chat_id = update.effective_chat.id
@@ -65,18 +68,21 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
         except Exception as e:
             print(f"Error sending image {url}: {e}")
 
+# Funzione per il comando start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Benvenuto! Invia una parola chiave per cercare immagini su Google.')
 
+# Funzione principale per eseguire il bot
 def main():
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
 
-    application.loop.create_task(ping_bot())
-
+    # Avvia il ping periodico dentro il ciclo di eventi esistente
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ping_bot))  # Usa questo per creare un handler separato
     application.run_polling()
 
+# Avvio del bot
 if __name__ == '__main__':
     main()
