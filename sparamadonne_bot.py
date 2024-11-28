@@ -16,6 +16,9 @@ app = Flask(__name__)
 def home():
     return "Il bot è attivo!", 200
 
+# Variabile globale per controllare l'interruzione
+stop_sending = {}
+
 # Funzione per pingare periodicamente il bot
 async def ping_bot():
     while True:
@@ -67,17 +70,27 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
         return
 
     print(f"Found {len(image_urls)} images for query '{query}'")  # Debug
+    stop_sending[chat_id] = False  # Reset il flag per il chat_id
 
     for url in image_urls:
+        if stop_sending.get(chat_id, False):
+            await update.message.reply_text("Invio interrotto.")
+            break
         try:
             await context.bot.send_photo(chat_id=chat_id, photo=url)
             await asyncio.sleep(3)  # Optional pause to avoid overloading
         except Exception as e:
             print(f"Error sending image {url}: {e}")
 
+# Funzione per interrompere l'invio
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    stop_sending[chat_id] = True
+    await update.message.reply_text("Interruzione richiesta. L'invio verrà fermato a breve.")
+
 # Funzione per il comando start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Benvenuto! Invia una parola chiave per cercare immagini su Google.')
+    await update.message.reply_text('Benvenuto! Invia una parola chiave per cercare immagini su Google. Usa /stop per interrompere l\'invio.')
 
 # Funzione principale per avviare il bot
 def run_bot():
@@ -85,6 +98,7 @@ def run_bot():
 
     # Aggiungi i gestori
     application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('stop', stop))  # Aggiungi il comando stop
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
 
     # Avvia il ping periodico
