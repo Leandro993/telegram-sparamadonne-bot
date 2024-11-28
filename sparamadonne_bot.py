@@ -1,19 +1,26 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from flask import Flask
 import asyncio
+import threading
 import requests
-import time
 
 TOKEN = '7114806273:AAHgtfAfV391U0LgrWFy554-RkVcUb57l18'
 GOOGLE_API_KEY = 'AIzaSyDn5KBLfwN3U9Fp9i084plI_Hzb5G8_XCo'
 GOOGLE_CX = '4766ab6c805714436'
 
-# Funzione per pingare periodicamente il bot ogni 5 minuti
+# Flask app per gestire il ping
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Il bot è attivo!", 200
+
+# Funzione per pingare periodicamente il bot
 async def ping_bot():
     while True:
         try:
-            # Esegui una richiesta HTTP per mantenere attivo il bot
-            response = requests.get('https://your-bot-url.onrender.com')  # Modifica con l'URL del tuo bot
+            response = requests.get('https://telegram-sparamadonne-bot.onrender.com')  # Modifica con l'URL del tuo bot
             if response.status_code == 200:
                 print("Ping success!")
             else:
@@ -37,7 +44,7 @@ async def fetch_image_urls(query: str):
             data = response.json()
             new_urls = [item['link'] for item in data.get('items', [])]
             image_urls.extend(new_urls)
-            
+
             # Interrompi la ricerca se non ci sono più risultati
             if not new_urls:
                 break
@@ -72,17 +79,27 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Benvenuto! Invia una parola chiave per cercare immagini su Google.')
 
-# Funzione principale per eseguire il bot
-def main():
+# Funzione principale per avviare il bot
+def run_bot():
     application = Application.builder().token(TOKEN).build()
 
+    # Aggiungi i gestori
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_images_from_search))
 
-    # Avvia il ping periodico dentro il ciclo di eventi esistente
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ping_bot))  # Usa questo per creare un handler separato
+    # Avvia il ping periodico
+    asyncio.get_event_loop().create_task(ping_bot())
+
+    # Esegui il bot
     application.run_polling()
 
-# Avvio del bot
+# Funzione per avviare Flask
+def run_flask():
+    app.run(host='0.0.0.0', port=10000)  # Flask ascolta sulla porta 10000
+
 if __name__ == '__main__':
-    main()
+    # Esegui Flask in un thread separato
+    threading.Thread(target=run_flask).start()
+
+    # Esegui il bot
+    run_bot()
