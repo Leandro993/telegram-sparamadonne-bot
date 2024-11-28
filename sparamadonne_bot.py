@@ -73,16 +73,26 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
     stop_sending[chat_id] = False  # Reset il flag per il chat_id
 
     for url in image_urls:
-        # Controlla se il comando /stop è stato inviato
+        # Controlla il flag `stop_sending` prima di inviare la foto
         if stop_sending.get(chat_id, False):
             await update.message.reply_text("Invio interrotto.")
             print(f"Stopped sending images for chat_id: {chat_id}")  # Debug
-            break
+            return
+        
         try:
             await context.bot.send_photo(chat_id=chat_id, photo=url)
         except Exception as e:
             print(f"Error sending image {url}: {e}")
-        await asyncio.sleep(3)  # Pausa breve per controllare il comando /stop
+        
+        # Pausa breve per controllare il comando /stop
+        await asyncio.sleep(3)
+
+# Funzione per interrompere l'invio
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    stop_sending[chat_id] = True  # Imposta il flag per interrompere
+    await update.message.reply_text("Interruzione richiesta. L'invio verrà fermato a breve.")
+    print(f"Command /stop received for chat_id: {chat_id}")  # Debug
 
 # Funzione per interrompere l'invio
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
