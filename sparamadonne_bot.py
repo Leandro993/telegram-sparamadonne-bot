@@ -16,7 +16,7 @@ async def ping_bot():
     while True:
         try:
             # Esegui una richiesta HTTP per mantenere attivo il bot
-            response = requests.get('https://your-bot-url.onrender.com')  # Modifica con l'URL del tuo bot
+            response = requests.get('https://telegram-sparamadonne-bot.onrender.com')  # Modifica con l'URL del tuo bot
             if response.status_code == 200:
                 print("Ping success!")
             else:
@@ -82,14 +82,8 @@ app = Flask(__name__)
 def home():
     return "Bot is running"
 
-# Funzione per eseguire il bot e Flask insieme
-def run_flask():
-    # Flask usa la variabile d'ambiente PORT per determinare la porta
-    port = int(os.environ.get('PORT', 5000))  # Porta predefinita 5000
-    app.run(host='0.0.0.0', port=port)
-
-# Funzione principale per eseguire il bot
-def main():
+# Funzione per eseguire il bot
+async def run_bot():
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler('start', start))
@@ -98,11 +92,19 @@ def main():
     # Avvia il ping periodico dentro il ciclo di eventi esistente
     asyncio.create_task(ping_bot())  # Questo rimane asincrono
 
-    # Avvia il server Flask in un thread separato
+    # Avvia il bot
+    await application.run_polling()
+
+# Funzione per avviare Flask in un thread separato
+def run_flask():
+    # Flask usa la variabile d'ambiente PORT per determinare la porta
+    port = int(os.environ.get('PORT', 5000))  # Porta predefinita 5000
+    app.run(host='0.0.0.0', port=port)
+
+# Avvio del bot e del server Flask
+if __name__ == '__main__':
+    # Avvia Flask in un thread separato
     threading.Thread(target=run_flask).start()
 
-    application.run_polling()
-
-# Avvio del bot
-if __name__ == '__main__':
-    main()
+    # Esegui il bot
+    asyncio.run(run_bot())
