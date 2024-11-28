@@ -36,7 +36,7 @@ async def ping_bot():
 # Funzione per recuperare le immagini da Google
 async def fetch_image_urls(query: str):
     image_urls = []
-    max_results = 50
+    max_results = 20
     results_per_request = 10  # Google consente un massimo di 10 risultati per richiesta
 
     for start_index in range(1, max_results, results_per_request):
@@ -73,21 +73,23 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
     stop_sending[chat_id] = False  # Reset il flag per il chat_id
 
     for url in image_urls:
+        # Controlla se il comando /stop è stato inviato
         if stop_sending.get(chat_id, False):
             await update.message.reply_text("Invio interrotto.")
+            print(f"Stopped sending images for chat_id: {chat_id}")  # Debug
             break
         try:
             await context.bot.send_photo(chat_id=chat_id, photo=url)
-            await asyncio.sleep(3)  # Optional pause to avoid overloading
         except Exception as e:
             print(f"Error sending image {url}: {e}")
+        await asyncio.sleep(3)  # Pausa breve per controllare il comando /stop
 
 # Funzione per interrompere l'invio
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     stop_sending[chat_id] = True
-    print(f"Received /stop command from chat_id: {chat_id}")  # Conferma sul terminale
     await update.message.reply_text("Interruzione richiesta. L'invio verrà fermato a breve.")
+    print(f"Command /stop received for chat_id: {chat_id}")  # Debug
 
 # Funzione per il comando start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
