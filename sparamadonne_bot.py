@@ -86,6 +86,7 @@ async def send_images_from_search(update: Update, context: ContextTypes.DEFAULT_
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     stop_sending[chat_id] = True
+    print(f"Received /stop command from chat_id: {chat_id}")  # Conferma sul terminale
     await update.message.reply_text("Interruzione richiesta. L'invio verrà fermato a breve.")
 
 # Funzione per il comando start
